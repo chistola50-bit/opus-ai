@@ -4,22 +4,53 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
+interface DailyPoint {
+  date: string;
+  count: number;
+}
+
 interface AdminUser {
   id: string;
   email: string;
   credits: number;
-  createdAt: string;
+  totalSpent: number;
+  totalPurchased: number;
   isBlocked: boolean;
-  suspicious: boolean;
-  _count: { transactions: number };
+  createdAt: string;
+  _count: {
+    transactions: number;
+    purchases: number;
+  };
 }
 
-interface AdminTx {
+interface Tx {
   id: string;
   type: string;
   amount: number;
   createdAt: string;
   user: { email: string };
+}
+
+interface Visit {
+  id: string;
+  path: string;
+  ip: string | null;
+  country: string | null;
+  userAgent: string | null;
+  referer: string | null;
+  createdAt: string;
+  user: { email: string | null } | null;
+}
+
+interface SecurityEvent {
+  id: string;
+  type: string;
+  level: string;
+  ip: string | null;
+  userAgent: string | null;
+  details: string | null;
+  createdAt: string;
+  user: { email: string | null } | null;
 }
 
 interface Stats {
@@ -29,7 +60,13 @@ interface Stats {
   totalPurchases: number;
   totalRevenue: number;
   users: AdminUser[];
-  recentTransactions: AdminTx[];
+  recentTransactions: Tx[];
+  daily: {
+    visits: DailyPoint[];
+    registrations: DailyPoint[];
+  };
+  recentVisits: Visit[];
+  securityEvents: SecurityEvent[];
 }
 
 const adminEmails = ['chistola50@gmail.com'];
@@ -37,387 +74,340 @@ const adminEmails = ['chistola50@gmail.com'];
 export default function AdminPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [blockLoadingId, setBlockLoadingId] = useState<string | null>(null);
+  const [blockingUserId, setBlockingUserId] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     if (status === 'loading') return;
 
-    if (!session?.user?.email || !adminEmails.includes(session.user.email)) {
+    if (
+      !session?.user?.email ||
+      !adminEmails.includes(session.user.email)
+    ) {
       router.push('/');
       return;
     }
 
     fetchStats();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, status]);
 
   const fetchStats = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const res = await fetch('/api/admin/stats');
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        setError(body.error || `Failed to load admin stats (${res.status})`);
-        setLoading(false);
-        return;
-      }
-
-      const data = (await res.json()) as Stats;
-      setStats(data);
-    } catch (e) {
-      console.error(e);
-      setError('Server connection error');
-    } finally {
-      setLoading(false);
-    }
+    setLoading(true);
+    const res = await fetch('/api/admin/stats');
+    const data = await res.json();
+    setStats(data);
+    setLoading(false);
   };
 
-  const toggleBlock = async (userId: string, block: boolean) => {
+  const toggleBlockUser = async (user: AdminUser) => {
+    setBlockingUserId(user.id);
     try {
-      setBlockLoadingId(userId);
-      const res = await fetch('/api/admin/users/block', {
+      await fetch('/api/admin/user/block', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, block }),
+        body: JSON.stringify({
+          userId: user.id,
+          block: !user.isBlocked,
+        }),
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        console.error('Block error:', data);
-        return;
-      }
-
-      setStats((prev) =>
-        prev
-          ? {
-              ...prev,
-              users: prev.users.map((u) =>
-                u.id === userId ? { ...u, isBlocked: block } : u
-              ),
-            }
-          : prev
-      );
+      await fetchStats();
     } finally {
-      setBlockLoadingId(null);
+      setBlockingUserId(null);
     }
   };
 
-  // простая агрегация: активность по дням (по recentTransactions)
-  const usageByDay = (() => {
-    if (!stats) return [] as { date: string; label: string; amount: number }[];
-
-    const map = new Map<string, number>();
-
-    for (const tx of stats.recentTransactions) {
-      const d = new Date(tx.createdAt);
-      const key = d.toISOString().slice(0, 10); // YYYY-MM-DD
-      const prev = map.get(key) || 0;
-      map.set(key, prev + Math.abs(tx.amount));
-    }
-
-    const days: { date: string; label: string; amount: number }[] = [];
-
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const key = d.toISOString().slice(0, 10);
-      const amount = map.get(key) || 0;
-
-      const label = d.toLocaleDateString(undefined, {
-        day: '2-digit',
-        month: 'short',
-      });
-
-      days.push({ date: key, label, amount });
-    }
-
-    return days;
-  })();
-
-  const maxUsage =
-    usageByDay.reduce((m, d) => (d.amount > m ? d.amount : m), 0) || 1;
-
-  // новые юзеры за 7 дней
-  const newUsersByDay = (() => {
-    if (!stats) return [] as { date: string; label: string; count: number }[];
-
-    const map = new Map<string, number>();
-
-    for (const u of stats.users) {
-      const d = new Date(u.createdAt);
-      const key = d.toISOString().slice(0, 10);
-      const prev = map.get(key) || 0;
-      map.set(key, prev + 1);
-    }
-
-    const days: { date: string; label: string; count: number }[] = [];
-
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const key = d.toISOString().slice(0, 10);
-      const count = map.get(key) || 0;
-
-      const label = d.toLocaleDateString(undefined, {
-        day: '2-digit',
-        month: 'short',
-      });
-
-      days.push({ date: key, label, count });
-    }
-
-    return days;
-  })();
-
-  if (loading) {
+  if (loading || !stats) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin w-8 h-8 border-2 border-yellow-500 border-t-transparent rounded-full" />
-          <span className="text-gray-500 text-sm">Loading admin data…</span>
-        </div>
+        <div className="animate-spin w-8 h-8 border-2 border-yellow-500 border-t-transparent rounded-full" />
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center px-4">
-        <div className="bg-red-500/10 border border-red-500/40 rounded-xl p-6 max-w-md w-full text-sm">
-          <p className="font-semibold mb-2">Admin error</p>
-          <p className="text-red-300 mb-4">{error}</p>
-          <button
-            onClick={fetchStats}
-            className="bg-yellow-500 text-black font-semibold px-4 py-2 rounded-lg hover:bg-yellow-400 transition"
-          >
-            Try again
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!stats) return null;
+  const maxVisits = Math.max(
+    ...stats.daily.visits.map((d) => d.count),
+    1,
+  );
+  const maxRegs = Math.max(
+    ...stats.daily.registrations.map((d) => d.count),
+    1,
+  );
 
   return (
-    <div className="min-h-screen bg-black text-white p-8">
-      <h1 className="text-3xl font-bold mb-8">📊 Админ-панель</h1>
-
-      {/* ОБЩАЯ СТАТИСТИКА */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-gray-900 p-6 rounded-xl">
-          <p className="text-gray-400">Пользователей</p>
-          <p className="text-3xl font-bold">{stats.totalUsers}</p>
+    <div className="min-h-screen bg-black text-white p-6 sm:p-8 space-y-8">
+      <header className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">📊 Admin Dashboard</h1>
+        <div className="text-sm text-gray-400">
+          {session?.user?.email}
         </div>
-        <div className="bg-gray-900 p-6 rounded-xl">
-          <p className="text-gray-400">Кредитов потрачено</p>
+      </header>
+
+      {/* TOP STATS */}
+      <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-gray-900 p-4 rounded-xl border border-gray-800">
+          <p className="text-gray-400 text-sm">Пользователи</p>
+          <p className="text-3xl font-bold">
+            {stats.totalUsers.toLocaleString()}
+          </p>
+        </div>
+        <div className="bg-gray-900 p-4 rounded-xl border border-gray-800">
+          <p className="text-gray-400 text-sm">Кредитов потрачено</p>
           <p className="text-3xl font-bold text-red-500">
             {stats.totalCreditsUsed.toLocaleString()}
           </p>
         </div>
-        <div className="bg-gray-900 p-6 rounded-xl">
-          <p className="text-gray-400">Кредитов осталось</p>
+        <div className="bg-gray-900 p-4 rounded-xl border border-gray-800">
+          <p className="text-gray-400 text-sm">Кредитов осталось</p>
           <p className="text-3xl font-bold text-green-500">
             {stats.totalCreditsRemaining.toLocaleString()}
           </p>
         </div>
-        <div className="bg-gray-900 p-6 rounded-xl">
-          <p className="text-gray-400">Выручка</p>
+        <div className="bg-gray-900 p-4 rounded-xl border border-gray-800">
+          <p className="text-gray-400 text-sm">Выручка</p>
           <p className="text-3xl font-bold text-yellow-500">
             ${stats.totalRevenue.toFixed(2)}
           </p>
         </div>
-      </div>
+      </section>
 
-      {/* ГРАФИКИ */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-        {/* Активность */}
-        <div className="bg-gray-900 rounded-xl p-6">
-          <h2 className="text-xl font-bold mb-4">⚡ Активность за 7 дней</h2>
+      {/* CHARTS */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-gray-900 p-4 rounded-xl border border-gray-800">
+          <h2 className="text-lg font-semibold mb-4">
+            Трафик (посещения, 7 дней)
+          </h2>
           <div className="flex items-end gap-2 h-40">
-            {usageByDay.map((d) => (
+            {stats.daily.visits.map((d) => (
               <div
                 key={d.date}
-                className="flex flex-col items-center justify-end flex-1"
+                className="flex-1 flex flex-col items-center"
               >
                 <div
-                  className="w-full bg-gradient-to-t from-yellow-500 to-yellow-300 rounded-t-lg"
+                  className="w-full bg-yellow-500 rounded-t-md"
                   style={{
-                    height: `${(d.amount / maxUsage) * 100 || 0}%`,
+                    height: `${(d.count / maxVisits) * 100 || 5}%`,
                   }}
                 />
-                <span className="mt-2 text-xs text-gray-400">
-                  {d.label}
-                </span>
-                <span className="text-[10px] text-gray-500">
-                  {d.amount ? d.amount.toLocaleString() : ''}
-                </span>
+                <div className="text-xs text-gray-500 mt-1">
+                  {d.date.slice(5)}
+                </div>
+                <div className="text-xs text-gray-300">
+                  {d.count}
+                </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Новые пользователи */}
-        <div className="bg-gray-900 rounded-xl p-6">
-          <h2 className="text-xl font-bold mb-4">👥 Новые юзеры (7 дней)</h2>
+        <div className="bg-gray-900 p-4 rounded-xl border border-gray-800">
+          <h2 className="text-lg font-semibold mb-4">
+            Регистрации (7 дней)
+          </h2>
           <div className="flex items-end gap-2 h-40">
-            {newUsersByDay.map((d) => (
+            {stats.daily.registrations.map((d) => (
               <div
                 key={d.date}
-                className="flex flex-col items-center justify-end flex-1"
+                className="flex-1 flex flex-col items-center"
               >
                 <div
-                  className="w-full bg-gradient-to-t from-blue-500 to-blue-300 rounded-t-lg"
+                  className="w-full bg-blue-500 rounded-t-md"
                   style={{
-                    height: `${(d.count / Math.max(...newUsersByDay.map((x) => x.count), 1)) * 100 || 0}%`,
+                    height: `${(d.count / maxRegs) * 100 || 5}%`,
                   }}
                 />
-                <span className="mt-2 text-xs text-gray-400">
-                  {d.label}
-                </span>
-                <span className="text-[10px] text-gray-500">
-                  {d.count || ''}
-                </span>
+                <div className="text-xs text-gray-500 mt-1">
+                  {d.date.slice(5)}
+                </div>
+                <div className="text-xs text-gray-300">
+                  {d.count}
+                </div>
               </div>
             ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* ПОЛЬЗОВАТЕЛИ */}
-      <div className="bg-gray-900 rounded-xl p-6 mb-8">
-        <h2 className="text-xl font-bold mb-4">👥 Пользователи</h2>
+      {/* USERS TABLE */}
+      <section className="bg-gray-900 rounded-xl border border-gray-800 p-4 space-y-4">
+        <h2 className="text-xl font-semibold">👥 Пользователи</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-gray-400 border-b border-gray-800">
-                <th className="pb-3">Email</th>
-                <th className="pb-3">Кредиты</th>
-                <th className="pb-3">Транзакций</th>
-                <th className="pb-3">Статус</th>
-                <th className="pb-3">Регистрация</th>
-                <th className="pb-3">Действия</th>
+                <th className="pb-2">Email</th>
+                <th className="pb-2">Кредиты</th>
+                <th className="pb-2">Покупки</th>
+                <th className="pb-2">Транзакций</th>
+                <th className="pb-2">Spent</th>
+                <th className="pb-2">Registered</th>
+                <th className="pb-2">Статус</th>
+                <th className="pb-2"></th>
               </tr>
             </thead>
             <tbody>
-              {stats.users.map((user) => {
-                const statusLabel = user.isBlocked
-                  ? 'Заблокирован'
-                  : user.suspicious
-                  ? 'Подозрительный'
-                  : 'OK';
-
-                const statusColor = user.isBlocked
-                  ? 'bg-red-500/20 text-red-400 border-red-500/40'
-                  : user.suspicious
-                  ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/40'
-                  : 'bg-green-500/10 text-green-400 border-green-500/40';
-
-                return (
-                  <tr
-                    key={user.id}
-                    className={`border-b border-gray-800 ${
-                      user.suspicious && !user.isBlocked
-                        ? 'bg-yellow-500/5'
-                        : ''
-                    }`}
-                  >
-                    <td className="py-3">{user.email}</td>
-                    <td className="py-3">
-                      {user.credits.toLocaleString()}
-                    </td>
-                    <td className="py-3">
-                      {user._count.transactions}
-                    </td>
-                    <td className="py-3">
-                      <span
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs border ${statusColor}`}
-                      >
-                        {statusLabel}
+              {stats.users.map((user) => (
+                <tr
+                  key={user.id}
+                  className="border-b border-gray-800 last:border-0"
+                >
+                  <td className="py-2">{user.email}</td>
+                  <td className="py-2">
+                    {user.credits.toLocaleString()}
+                  </td>
+                  <td className="py-2">
+                    {user._count.purchases.toLocaleString()}
+                  </td>
+                  <td className="py-2">
+                    {user._count.transactions.toLocaleString()}
+                  </td>
+                  <td className="py-2">
+                    {user.totalSpent.toLocaleString()}
+                  </td>
+                  <td className="py-2 text-gray-400">
+                    {new Date(user.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="py-2">
+                    {user.isBlocked ? (
+                      <span className="text-red-400 text-xs font-semibold">
+                        BLOCKED
                       </span>
-                    </td>
-                    <td className="py-3 text-gray-400">
-                      {new Date(
-                        user.createdAt
-                      ).toLocaleDateString()}
-                    </td>
-                    <td className="py-3">
-                      <button
-                        onClick={() =>
-                          toggleBlock(user.id, !user.isBlocked)
-                        }
-                        disabled={blockLoadingId === user.id}
-                        className={`px-3 py-1 rounded-lg text-xs font-semibold border ${
-                          user.isBlocked
-                            ? 'border-green-500 text-green-400 hover:bg-green-500/10'
-                            : 'border-red-500 text-red-400 hover:bg-red-500/10'
-                        } disabled:opacity-50`}
-                      >
-                        {blockLoadingId === user.id
-                          ? '...'
-                          : user.isBlocked
-                          ? 'Разблокировать'
-                          : 'Заблокировать'}
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* ПОСЛЕДНИЕ ТРАНЗАКЦИИ */}
-      <div className="bg-gray-900 rounded-xl p-6">
-        <h2 className="text-xl font-bold mb-4">📝 Последние действия</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-gray-400 border-b border-gray-800">
-                <th className="pb-3">Пользователь</th>
-                <th className="pb-3">Действие</th>
-                <th className="pb-3">Кредитов</th>
-                <th className="pb-3">Время</th>
-              </tr>
-            </thead>
-            <tbody>
-              {stats.recentTransactions.map((tx) => {
-                const isNegative = tx.amount < 0;
-                const value = Math.abs(tx.amount).toLocaleString();
-
-                return (
-                  <tr key={tx.id} className="border-b border-gray-800">
-                    <td className="py-3">{tx.user.email}</td>
-                    <td className="py-3">{tx.type}</td>
-                    <td
-                      className={`py-3 ${
-                        isNegative ? 'text-red-400' : 'text-green-400'
+                    ) : (
+                      <span className="text-green-400 text-xs font-semibold">
+                        ACTIVE
+                      </span>
+                    )}
+                  </td>
+                  <td className="py-2">
+                    <button
+                      onClick={() => toggleBlockUser(user)}
+                      disabled={blockingUserId === user.id}
+                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
+                        user.isBlocked
+                          ? 'bg-green-600 hover:bg-green-500'
+                          : 'bg-red-600 hover:bg-red-500'
+                      } ${
+                        blockingUserId === user.id
+                          ? 'opacity-50 cursor-not-allowed'
+                          : ''
                       }`}
                     >
-                      {isNegative ? '-' : '+'}
-                      {value}
-                    </td>
-                    <td className="py-3 text-gray-400">
-                      {new Date(
-                        tx.createdAt
-                      ).toLocaleString()}
-                    </td>
-                  </tr>
-                );
-              })}
+                      {blockingUserId === user.id
+                        ? '...'
+                        : user.isBlocked
+                        ? 'Unblock'
+                        : 'Block'}
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
+
+      {/* LAST TRANSACTIONS + VISITS + SECURITY */}
+      <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* Transactions */}
+        <div className="bg-gray-900 rounded-xl border border-gray-800 p-4 space-y-3">
+          <h2 className="text-lg font-semibold">
+            📝 Последние транзакции
+          </h2>
+          <div className="space-y-2 max-h-80 overflow-y-auto">
+            {stats.recentTransactions.map((tx) => (
+              <div
+                key={tx.id}
+                className="flex justify-between text-xs border-b border-gray-800 pb-1 last:border-0"
+              >
+                <div>
+                  <div className="text-gray-200">
+                    {tx.user?.email || '—'}
+                  </div>
+                  <div className="text-gray-500">
+                    {tx.type} •{' '}
+                    {new Date(tx.createdAt).toLocaleString()}
+                  </div>
+                </div>
+                <div className="text-red-400 font-semibold">
+                  -{tx.amount.toLocaleString()}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Visits */}
+        <div className="bg-gray-900 rounded-xl border border-gray-800 p-4 space-y-3">
+          <h2 className="text-lg font-semibold">
+            🌍 Последние визиты
+          </h2>
+          <div className="space-y-2 max-h-80 overflow-y-auto text-xs">
+            {stats.recentVisits.map((v) => (
+              <div
+                key={v.id}
+                className="border-b border-gray-800 pb-1 last:border-0"
+              >
+                <div className="flex justify-between">
+                  <span className="text-gray-200">
+                    {v.user?.email || 'Гость'}
+                  </span>
+                  <span className="text-gray-500">
+                    {new Date(v.createdAt).toLocaleTimeString()}
+                  </span>
+                </div>
+                <div className="text-gray-400">
+                  Path: <span className="text-gray-200">{v.path}</span>
+                </div>
+                <div className="text-gray-500">
+                  IP: {v.ip || '—'} | Country: {v.country || '—'}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Security */}
+        <div className="bg-gray-900 rounded-xl border border-gray-800 p-4 space-y-3">
+          <h2 className="text-lg font-semibold">
+            🔐 Безопасность
+          </h2>
+          <div className="space-y-2 max-h-80 overflow-y-auto text-xs">
+            {stats.securityEvents.map((e) => (
+              <div
+                key={e.id}
+                className="border-b border-gray-800 pb-1 last:border-0"
+              >
+                <div className="flex justify-between">
+                  <span
+                    className={
+                      e.level === 'high'
+                        ? 'text-red-400'
+                        : e.level === 'warning'
+                        ? 'text-yellow-400'
+                        : 'text-gray-300'
+                    }
+                  >
+                    {e.type}
+                  </span>
+                  <span className="text-gray-500">
+                    {new Date(e.createdAt).toLocaleTimeString()}
+                  </span>
+                </div>
+                <div className="text-gray-400">
+                  {e.user?.email || '—'} • IP: {e.ip || '—'}
+                </div>
+                {e.details && (
+                  <div className="text-gray-500">
+                    {e.details.slice(0, 80)}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

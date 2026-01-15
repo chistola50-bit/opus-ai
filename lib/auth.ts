@@ -1,8 +1,10 @@
+// lib/auth.ts
 import { NextAuthOptions } from 'next-auth';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import { prisma } from './prisma';
+import { createSecurityEvent } from './security';
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as any,
@@ -24,19 +26,41 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user || !user.password) {
+          await createSecurityEvent({
+            type: 'login_email_not_found',
+            details: `Email: ${credentials.email}`,
+            level: 'warning',
+          });
           throw new Error('Invalid credentials');
         }
 
-        // 🔥 блок — юзер не может войти
         if (user.isBlocked) {
-          throw new Error('Account is blocked');
+          await createSecurityEvent({
+            userId: user.id,
+            type: 'blocked_login_attempt',
+            details: `Blocked user tried to log in (${user.email})`,
+            level: 'high',
+          });
+          throw new Error('Your account is blocked');
         }
 
         const isValid = await bcrypt.compare(credentials.password, user.password);
 
         if (!isValid) {
+          await createSecurityEvent({
+            userId: user.id,
+            type: 'login_wrong_password',
+            details: `Email: ${user.email}`,
+            level: 'warning',
+          });
           throw new Error('Invalid credentials');
         }
+
+        await createSecurityEvent({
+          userId: user.id,
+          type: 'login_success',
+          level: 'info',
+        });
 
         return {
           id: user.id,
@@ -58,7 +82,8 @@ export const authOptions: NextAuthOptions = {
         token.rememberMe = (user as any).rememberMe;
 
         if (!(user as any).rememberMe) {
-          token.exp = Math.floor(Date.now() / 1000) + 24 * 60 * 60; // 24 часа
+          token.exp =
+            Math.floor(Date.now() / 1000) + 24 * 60 * 60; // 24 часа
         }
       }
       return token;

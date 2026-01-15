@@ -5,7 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  // URL берётся из prisma.config.ts, поэтому здесь оставляем как есть
+  // url берётся из prisma.config.ts / env, как у тебя раньше
 }
 
 model User {
@@ -16,9 +16,10 @@ model User {
   image         String?
   password      String?
 
-  // 🚫 Блокировка пользователя
+  // блокировка аккаунта
   isBlocked     Boolean   @default(false)
 
+  // кредиты и рефералка
   credits                   Int      @default(0)
   referralCode              String   @unique @default(cuid())
   referredBy                String?
@@ -35,10 +36,12 @@ model User {
   referrer  User?   @relation("UserReferrals", fields: [referredBy], references: [id])
   referrals User[]  @relation("UserReferrals")
 
-  accounts     Account[]
-  sessions     Session[]
-  purchases    Purchase[]
-  transactions Transaction[]
+  accounts       Account[]
+  sessions       Session[]
+  purchases      Purchase[]
+  transactions   Transaction[]
+  securityEvents SecurityEvent[]
+  visits         VisitLog[]
 }
 
 model Account {
@@ -84,8 +87,8 @@ model Purchase {
   status    String   @default("pending")
   provider  String
 
-  referralBonus    Int     @default(0)
-  referralPaid     Boolean @default(false)
+  referralBonus Int     @default(0)
+  referralPaid  Boolean @default(false)
 
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
@@ -112,6 +115,7 @@ model PasswordResetToken {
   @@index([email])
 }
 
+// оплата CryptoCloud (у тебя уже логика есть)
 model Payment {
   id        String   @id @default(cuid())
   orderId   String   @unique
@@ -120,4 +124,32 @@ model Payment {
   status    String
   processed Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+// Логи посещений
+model VisitLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  path      String
+  ip        String?
+  country   String?
+  userAgent String?
+  referer   String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+}
+
+// События безопасности
+model SecurityEvent {
+  id        String   @id @default(cuid())
+  userId    String?
+  type      String        // login_failed, blocked_login и т.п.
+  ip        String?
+  userAgent String?
+  details   String?
+  level     String   @default("info")  // info | warning | high
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
 }

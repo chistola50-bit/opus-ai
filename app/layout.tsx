@@ -2,12 +2,14 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import SessionProvider from '@/components/providers/SessionProvider';
+import AnalyticsTracker from '@/components/AnalyticsTracker';
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] });
 
 export const metadata: Metadata = {
   title: 'AI Humanizer Pro - Сделай ИИ-текст человечным',
-  description: 'Профессиональные инструменты для гуманизации текста, обхода AI-детекторов и улучшения контента',
+  description:
+    'Профессиональные инструменты для гуманизации текста, обхода AI-детекторов и улучшения контента',
 };
 
 export default function RootLayout({
@@ -17,8 +19,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ru">
-      <body className={inter.className}>
+      <body className={`${inter.className} bg-black`}>
         <SessionProvider>
+          <AnalyticsTracker />
           {children}
         </SessionProvider>
       </body>
