@@ -53,7 +53,11 @@ export async function POST(request: NextRequest) {
 
     if (user.credits < totalCost) {
       return NextResponse.json(
-        { error: 'Insufficient credits', required: totalCost, available: user.credits },
+        {
+          error: 'Insufficient credits',
+          required: totalCost,
+          available: user.credits,
+        },
         { status: 402 }
       );
     }
@@ -65,13 +69,12 @@ export async function POST(request: NextRequest) {
       select: { credits: true },
     });
 
-    // Record transaction
+    // Record transaction — без поля `tool`, только details
     await prisma.transaction.create({
       data: {
         userId: user.id,
         type: 'usage',
         amount: -totalCost,
-        tool,
         details: `Used ${tool} tool`,
       },
     });
