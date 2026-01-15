@@ -27,6 +27,11 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Invalid credentials');
         }
 
+        // 🔥 блок — юзер не может войти
+        if (user.isBlocked) {
+          throw new Error('Account is blocked');
+        }
+
         const isValid = await bcrypt.compare(credentials.password, user.password);
 
         if (!isValid) {
@@ -44,17 +49,16 @@ export const authOptions: NextAuthOptions = {
   ],
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days default
+    maxAge: 30 * 24 * 60 * 60,
   },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
+        token.id = (user as any).id;
         token.rememberMe = (user as any).rememberMe;
-        
-        // If not "remember me", set shorter expiration
+
         if (!(user as any).rememberMe) {
-          token.exp = Math.floor(Date.now() / 1000) + (24 * 60 * 60); // 24 hours
+          token.exp = Math.floor(Date.now() / 1000) + 24 * 60 * 60; // 24 часа
         }
       }
       return token;

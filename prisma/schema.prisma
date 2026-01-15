@@ -5,6 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  // URL берётся из prisma.config.ts, поэтому здесь оставляем как есть
 }
 
 model User {
@@ -14,7 +15,10 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String?
-  
+
+  // 🚫 Блокировка пользователя
+  isBlocked     Boolean   @default(false)
+
   credits                   Int      @default(0)
   referralCode              String   @unique @default(cuid())
   referredBy                String?
@@ -24,7 +28,7 @@ model User {
   referralBonusGiven        Boolean  @default(false)
   referralBonusesThisMonth  Int      @default(0)
   referralBonusesResetAt    DateTime @default(now())
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -79,10 +83,10 @@ model Purchase {
   credits   Int
   status    String   @default("pending")
   provider  String
-  
+
   referralBonus    Int     @default(0)
   referralPaid     Boolean @default(false)
-  
+
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
 }
@@ -93,7 +97,7 @@ model Transaction {
   type      String
   amount    Int
   details   String?
-  
+
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
 }
@@ -107,6 +111,7 @@ model PasswordResetToken {
 
   @@index([email])
 }
+
 model Payment {
   id        String   @id @default(cuid())
   orderId   String   @unique
