@@ -8,10 +8,14 @@ const plans: Record<string, number> = {
   business: 1500000,
 };
 
+// Обходим строгие типы PrismaClient
+const prismaAny = prisma as any;
+
 export async function POST(request: Request) {
   try {
     const data = await request.json();
 
+    // если оплата не успешна — ничего не делаем
     if (data.status !== 'success') {
       return NextResponse.json({ ok: true });
     }
@@ -21,6 +25,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No order_id' }, { status: 400 });
     }
 
+    // email_planId_timestamp
     const parts = orderId.split('_');
     const email = parts[0];
     const planId = parts[1];
@@ -30,14 +35,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid order' }, { status: 400 });
     }
 
-    const existing = await prisma.payment.findUnique({
+    // проверяем, не обрабатывали ли этот orderId ранее
+    const existing = await prismaAny.payment.findUnique({
       where: { orderId },
     });
 
     if (existing?.processed) {
+      // уже начисляли — просто выходим
       return NextResponse.json({ ok: true });
     }
 
+    // транзакция: +кредиты + отметка payment.processed = true
     await prisma.$transaction([
       prisma.user.update({
         where: { email },
@@ -45,7 +53,7 @@ export async function POST(request: Request) {
           credits: { increment: credits },
         },
       }),
-      prisma.payment.upsert({
+      prismaAny.payment.upsert({
         where: { orderId },
         update: {
           status: 'success',
