@@ -3,6 +3,8 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { nanoid } from 'nanoid';
 
+const FREE_CREDITS = 1000;
+
 export async function POST(request: NextRequest) {
   try {
     const { name, email, password, referralCode } = await request.json();
@@ -27,7 +29,7 @@ export async function POST(request: NextRequest) {
     }
 
     // find referrer if referral code provided
-    let referrerId = null;
+    let referrerId: string | null = null;
     if (referralCode) {
       const referrer = await prisma.user.findUnique({
         where: { referralCode },
@@ -37,30 +39,38 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // simple password check (минимум 6 символов, как при сбросе)
+    if (password.length < 6) {
+      return NextResponse.json(
+        { error: 'Password must be at least 6 characters' },
+        { status: 400 }
+      );
+    }
+
     // hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // generate unique referral code for new user
     const newReferralCode = nanoid(8);
 
-    // create user with 100 free credits
+    // create user with free credits
     const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
-        credits: 1000,
+        credits: FREE_CREDITS,
         referralCode: newReferralCode,
         referredBy: referrerId,
       },
     });
 
-    // record the free credits transaction
+    // record the free credits transaction (плюс 1000, как в балансе)
     await prisma.transaction.create({
       data: {
         userId: user.id,
-        type: 'purchase',
-        amount: 100,
+        type: 'bonus',
+        amount: FREE_CREDITS,
         details: 'Welcome bonus credits',
       },
     });
