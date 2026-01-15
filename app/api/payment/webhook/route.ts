@@ -1,0 +1,50 @@
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+
+const plans: Record<string, number> = {
+  starter: 300000,
+  basic: 700000,
+  pro: 1100000,
+  business: 1500000,
+};
+
+export async function POST(request: Request) {
+  try {
+    const data = await request.json();
+    
+    // Проверяем статус оплаты
+    if (data.status !== 'success') {
+      return NextResponse.json({ ok: true });
+    }
+
+    const orderId = data.order_id;
+    if (!orderId) {
+      return NextResponse.json({ error: 'No order_id' }, { status: 400 });
+    }
+
+    // Парсим order_id: email_planId_timestamp
+    const parts = orderId.split('_');
+    const email = parts[0];
+    const planId = parts[1];
+    const credits = plans[planId];
+
+    if (!email || !credits) {
+      return NextResponse.json({ error: 'Invalid order' }, { status: 400 });
+    }
+
+    // Начисляем кредиты
+    await prisma.user.update({
+      where: { email },
+      data: {
+        credits: { increment: credits },
+      },
+    });
+
+    console.log(`Credits added: ${email} +${credits}`);
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error('Webhook error:', error);
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+  }
+}
