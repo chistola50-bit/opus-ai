@@ -164,22 +164,27 @@ export async function POST(request: Request) {
 
     const inputTokens = Math.ceil(input.length / 4);
     const maxOutputTokens = MAX_OUTPUT[tool] || 500;
+
     const estimatedCost = Math.ceil(
-      (inputTokens * INPUT_COST / 1000) + (maxOutputTokens * OUTPUT_COST / 1000 * 1.5)
+      (inputTokens * INPUT_COST / 1000) +
+      (maxOutputTokens * OUTPUT_COST / 1000 * 1.5)
     );
 
     if (user.credits < estimatedCost) {
-      return NextResponse.json({
-        error: 'Not enough credits',
-        required: estimatedCost,
-        balance: user.credits,
-      }, { status: 402 });
+      return NextResponse.json(
+        {
+          error: 'Not enough credits',
+          required: estimatedCost,
+          balance: user.credits,
+        },
+        { status: 402 }
+      );
     }
 
     let languageInstruction = '';
     const inLang = LANGUAGE_NAMES[inputLang] || 'English';
     const outLang = LANGUAGE_NAMES[outputLang] || 'English';
-    
+
     if (inputLang !== outputLang) {
       languageInstruction = `\n\nIMPORTANT: The user's input is in ${inLang}. You must respond in ${outLang}.`;
     } else if (outputLang !== 'en') {
@@ -201,38 +206,42 @@ export async function POST(request: Request) {
     const output = completion.choices[0]?.message?.content || '';
     const usage = completion.usage;
 
-    const actualInputTokens = usage?.prompt_tokens || inputTokens;
-    const actualOutputTokens = usage?.completion_tokens || Math.ceil(output.length / 4);
+    const actualInputTokens =
+      usage?.prompt_tokens ?? inputTokens;
+    const actualOutputTokens =
+      usage?.completion_tokens ?? Math.ceil(output.length / 4);
+
     const actualCost = Math.ceil(
-      (actualInputTokens * INPUT_COST / 1000) + (actualOutputTokens * OUTPUT_COST / 1000)
+      (actualInputTokens * INPUT_COST / 1000) +
+      (actualOutputTokens * OUTPUT_COST / 1000)
     );
 
-    await prisma.user.update({
+    // списание с реальным расходом
+    const updatedUser = await prisma.user.update({
       where: { email: session.user.email },
       data: {
         credits: { decrement: actualCost },
       },
+      select: { credits: true },
     });
 
+    // лог транзакции с минусом, как в credits/use
     await prisma.transaction.create({
       data: {
         userId: user.id,
-        type: tool,
-        amount: actualCost,
-        details: input.substring(0, 100),
+        type: 'usage',
+        amount: -actualCost,
+        details: `Tool: ${tool}, input: ${input.substring(0, 100)}`,
       },
     });
-
-    const newBalance = user.credits - actualCost;
 
     return NextResponse.json({
       output,
       estimated: estimatedCost,
       actual: actualCost,
       saved: estimatedCost - actualCost,
-      balance: newBalance,
+      balance: updatedUser.credits,
     });
-
   } catch (error) {
     console.error('Generate error:', error);
     return NextResponse.json({ error: 'Generation failed' }, { status: 500 });
