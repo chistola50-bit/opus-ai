@@ -7,7 +7,9 @@ import { prisma } from './prisma';
 import { createSecurityEvent } from './security';
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma) as any,
+  // 👇 ВАЖНЫЙ ФИКС — кастуем prisma к any, чтобы типы не мозг ебали
+  adapter: PrismaAdapter(prisma as any) as any,
+
   providers: [
     CredentialsProvider({
       name: 'credentials',
@@ -71,19 +73,21 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
+
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60,
+    maxAge: 30 * 24 * 60 * 60, // 30 дней
   },
+
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
         token.id = (user as any).id;
         token.rememberMe = (user as any).rememberMe;
 
+        // если НЕ remember me — сессия 24 часа
         if (!(user as any).rememberMe) {
-          token.exp =
-            Math.floor(Date.now() / 1000) + 24 * 60 * 60; // 24 часа
+          token.exp = Math.floor(Date.now() / 1000) + 24 * 60 * 60;
         }
       }
       return token;
@@ -95,8 +99,10 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
+
   pages: {
     signIn: '/login',
   },
+
   secret: process.env.NEXTAUTH_SECRET,
 };

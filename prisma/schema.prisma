@@ -1,12 +1,13 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
+  // БЕЗ output — клиент генерится в node_modules/@prisma/client
 }
 
 datasource db {
   provider = "postgresql"
-  // url берётся из prisma.config.ts / env, как у тебя раньше
+  url      = env("DATABASE_URL")
 }
+
 
 model User {
   id            String    @id @default(cuid())
@@ -115,7 +116,7 @@ model PasswordResetToken {
   @@index([email])
 }
 
-// оплата CryptoCloud (у тебя уже логика есть)
+// оплата CryptoCloud
 model Payment {
   id        String   @id @default(cuid())
   orderId   String   @unique
@@ -140,15 +141,14 @@ model VisitLog {
   user User? @relation(fields: [userId], references: [id])
 }
 
-// События безопасности
 model SecurityEvent {
   id        String   @id @default(cuid())
   userId    String?
-  type      String        // login_failed, blocked_login и т.п.
+  type      String
   ip        String?
   userAgent String?
   details   String?
-  level     String   @default("info")  // info | warning | high
+  level     String   @default("info")
   createdAt DateTime @default(now())
 
   user User? @relation(fields: [userId], references: [id])
