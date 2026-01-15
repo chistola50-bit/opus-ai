@@ -49,6 +49,7 @@ export type UserMinAggregateOutputType = {
   emailVerified: Date | null
   image: string | null
   password: string | null
+  isBlocked: boolean | null
   credits: number | null
   referralCode: string | null
   referredBy: string | null
@@ -69,6 +70,7 @@ export type UserMaxAggregateOutputType = {
   emailVerified: Date | null
   image: string | null
   password: string | null
+  isBlocked: boolean | null
   credits: number | null
   referralCode: string | null
   referredBy: string | null
@@ -89,6 +91,7 @@ export type UserCountAggregateOutputType = {
   emailVerified: number
   image: number
   password: number
+  isBlocked: number
   credits: number
   referralCode: number
   referredBy: number
@@ -127,6 +130,7 @@ export type UserMinAggregateInputType = {
   emailVerified?: true
   image?: true
   password?: true
+  isBlocked?: true
   credits?: true
   referralCode?: true
   referredBy?: true
@@ -147,6 +151,7 @@ export type UserMaxAggregateInputType = {
   emailVerified?: true
   image?: true
   password?: true
+  isBlocked?: true
   credits?: true
   referralCode?: true
   referredBy?: true
@@ -167,6 +172,7 @@ export type UserCountAggregateInputType = {
   emailVerified?: true
   image?: true
   password?: true
+  isBlocked?: true
   credits?: true
   referralCode?: true
   referredBy?: true
@@ -274,6 +280,7 @@ export type UserGroupByOutputType = {
   emailVerified: Date | null
   image: string | null
   password: string | null
+  isBlocked: boolean
   credits: number
   referralCode: string
   referredBy: string | null
@@ -317,6 +324,7 @@ export type UserWhereInput = {
   emailVerified?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   image?: Prisma.StringNullableFilter<"User"> | string | null
   password?: Prisma.StringNullableFilter<"User"> | string | null
+  isBlocked?: Prisma.BoolFilter<"User"> | boolean
   credits?: Prisma.IntFilter<"User"> | number
   referralCode?: Prisma.StringFilter<"User"> | string
   referredBy?: Prisma.StringNullableFilter<"User"> | string | null
@@ -343,6 +351,7 @@ export type UserOrderByWithRelationInput = {
   emailVerified?: Prisma.SortOrderInput | Prisma.SortOrder
   image?: Prisma.SortOrderInput | Prisma.SortOrder
   password?: Prisma.SortOrderInput | Prisma.SortOrder
+  isBlocked?: Prisma.SortOrder
   credits?: Prisma.SortOrder
   referralCode?: Prisma.SortOrder
   referredBy?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -373,6 +382,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   emailVerified?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   image?: Prisma.StringNullableFilter<"User"> | string | null
   password?: Prisma.StringNullableFilter<"User"> | string | null
+  isBlocked?: Prisma.BoolFilter<"User"> | boolean
   credits?: Prisma.IntFilter<"User"> | number
   referredBy?: Prisma.StringNullableFilter<"User"> | string | null
   referralEarnings?: Prisma.IntFilter<"User"> | number
@@ -398,6 +408,7 @@ export type UserOrderByWithAggregationInput = {
   emailVerified?: Prisma.SortOrderInput | Prisma.SortOrder
   image?: Prisma.SortOrderInput | Prisma.SortOrder
   password?: Prisma.SortOrderInput | Prisma.SortOrder
+  isBlocked?: Prisma.SortOrder
   credits?: Prisma.SortOrder
   referralCode?: Prisma.SortOrder
   referredBy?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -426,6 +437,7 @@ export type UserScalarWhereWithAggregatesInput = {
   emailVerified?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   image?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   password?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  isBlocked?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   credits?: Prisma.IntWithAggregatesFilter<"User"> | number
   referralCode?: Prisma.StringWithAggregatesFilter<"User"> | string
   referredBy?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
@@ -446,6 +458,7 @@ export type UserCreateInput = {
   emailVerified?: Date | string | null
   image?: string | null
   password?: string | null
+  isBlocked?: boolean
   credits?: number
   referralCode?: string
   referralEarnings?: number
@@ -471,6 +484,7 @@ export type UserUncheckedCreateInput = {
   emailVerified?: Date | string | null
   image?: string | null
   password?: string | null
+  isBlocked?: boolean
   credits?: number
   referralCode?: string
   referredBy?: string | null
@@ -496,6 +510,7 @@ export type UserUpdateInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isBlocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   credits?: Prisma.IntFieldUpdateOperationsInput | number
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   referralEarnings?: Prisma.IntFieldUpdateOperationsInput | number
@@ -521,6 +536,7 @@ export type UserUncheckedUpdateInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isBlocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   credits?: Prisma.IntFieldUpdateOperationsInput | number
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -546,6 +562,7 @@ export type UserCreateManyInput = {
   emailVerified?: Date | string | null
   image?: string | null
   password?: string | null
+  isBlocked?: boolean
   credits?: number
   referralCode?: string
   referredBy?: string | null
@@ -566,6 +583,7 @@ export type UserUpdateManyMutationInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isBlocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   credits?: Prisma.IntFieldUpdateOperationsInput | number
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   referralEarnings?: Prisma.IntFieldUpdateOperationsInput | number
@@ -585,6 +603,7 @@ export type UserUncheckedUpdateManyInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isBlocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   credits?: Prisma.IntFieldUpdateOperationsInput | number
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -620,6 +639,7 @@ export type UserCountOrderByAggregateInput = {
   emailVerified?: Prisma.SortOrder
   image?: Prisma.SortOrder
   password?: Prisma.SortOrder
+  isBlocked?: Prisma.SortOrder
   credits?: Prisma.SortOrder
   referralCode?: Prisma.SortOrder
   referredBy?: Prisma.SortOrder
@@ -648,6 +668,7 @@ export type UserMaxOrderByAggregateInput = {
   emailVerified?: Prisma.SortOrder
   image?: Prisma.SortOrder
   password?: Prisma.SortOrder
+  isBlocked?: Prisma.SortOrder
   credits?: Prisma.SortOrder
   referralCode?: Prisma.SortOrder
   referredBy?: Prisma.SortOrder
@@ -668,6 +689,7 @@ export type UserMinOrderByAggregateInput = {
   emailVerified?: Prisma.SortOrder
   image?: Prisma.SortOrder
   password?: Prisma.SortOrder
+  isBlocked?: Prisma.SortOrder
   credits?: Prisma.SortOrder
   referralCode?: Prisma.SortOrder
   referredBy?: Prisma.SortOrder
@@ -726,16 +748,16 @@ export type NullableDateTimeFieldUpdateOperationsInput = {
   set?: Date | string | null
 }
 
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean
+}
+
 export type IntFieldUpdateOperationsInput = {
   set?: number
   increment?: number
   decrement?: number
   multiply?: number
   divide?: number
-}
-
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
 }
 
 export type DateTimeFieldUpdateOperationsInput = {
@@ -843,6 +865,7 @@ export type UserCreateWithoutReferralsInput = {
   emailVerified?: Date | string | null
   image?: string | null
   password?: string | null
+  isBlocked?: boolean
   credits?: number
   referralCode?: string
   referralEarnings?: number
@@ -867,6 +890,7 @@ export type UserUncheckedCreateWithoutReferralsInput = {
   emailVerified?: Date | string | null
   image?: string | null
   password?: string | null
+  isBlocked?: boolean
   credits?: number
   referralCode?: string
   referredBy?: string | null
@@ -896,6 +920,7 @@ export type UserCreateWithoutReferrerInput = {
   emailVerified?: Date | string | null
   image?: string | null
   password?: string | null
+  isBlocked?: boolean
   credits?: number
   referralCode?: string
   referralEarnings?: number
@@ -920,6 +945,7 @@ export type UserUncheckedCreateWithoutReferrerInput = {
   emailVerified?: Date | string | null
   image?: string | null
   password?: string | null
+  isBlocked?: boolean
   credits?: number
   referralCode?: string
   referralEarnings?: number
@@ -965,6 +991,7 @@ export type UserUpdateWithoutReferralsInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isBlocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   credits?: Prisma.IntFieldUpdateOperationsInput | number
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   referralEarnings?: Prisma.IntFieldUpdateOperationsInput | number
@@ -989,6 +1016,7 @@ export type UserUncheckedUpdateWithoutReferralsInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isBlocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   credits?: Prisma.IntFieldUpdateOperationsInput | number
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1032,6 +1060,7 @@ export type UserScalarWhereInput = {
   emailVerified?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   image?: Prisma.StringNullableFilter<"User"> | string | null
   password?: Prisma.StringNullableFilter<"User"> | string | null
+  isBlocked?: Prisma.BoolFilter<"User"> | boolean
   credits?: Prisma.IntFilter<"User"> | number
   referralCode?: Prisma.StringFilter<"User"> | string
   referredBy?: Prisma.StringNullableFilter<"User"> | string | null
@@ -1052,6 +1081,7 @@ export type UserCreateWithoutAccountsInput = {
   emailVerified?: Date | string | null
   image?: string | null
   password?: string | null
+  isBlocked?: boolean
   credits?: number
   referralCode?: string
   referralEarnings?: number
@@ -1076,6 +1106,7 @@ export type UserUncheckedCreateWithoutAccountsInput = {
   emailVerified?: Date | string | null
   image?: string | null
   password?: string | null
+  isBlocked?: boolean
   credits?: number
   referralCode?: string
   referredBy?: string | null
@@ -1116,6 +1147,7 @@ export type UserUpdateWithoutAccountsInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isBlocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   credits?: Prisma.IntFieldUpdateOperationsInput | number
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   referralEarnings?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1140,6 +1172,7 @@ export type UserUncheckedUpdateWithoutAccountsInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isBlocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   credits?: Prisma.IntFieldUpdateOperationsInput | number
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1164,6 +1197,7 @@ export type UserCreateWithoutSessionsInput = {
   emailVerified?: Date | string | null
   image?: string | null
   password?: string | null
+  isBlocked?: boolean
   credits?: number
   referralCode?: string
   referralEarnings?: number
@@ -1188,6 +1222,7 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   emailVerified?: Date | string | null
   image?: string | null
   password?: string | null
+  isBlocked?: boolean
   credits?: number
   referralCode?: string
   referredBy?: string | null
@@ -1228,6 +1263,7 @@ export type UserUpdateWithoutSessionsInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isBlocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   credits?: Prisma.IntFieldUpdateOperationsInput | number
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   referralEarnings?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1252,6 +1288,7 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isBlocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   credits?: Prisma.IntFieldUpdateOperationsInput | number
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1276,6 +1313,7 @@ export type UserCreateWithoutPurchasesInput = {
   emailVerified?: Date | string | null
   image?: string | null
   password?: string | null
+  isBlocked?: boolean
   credits?: number
   referralCode?: string
   referralEarnings?: number
@@ -1300,6 +1338,7 @@ export type UserUncheckedCreateWithoutPurchasesInput = {
   emailVerified?: Date | string | null
   image?: string | null
   password?: string | null
+  isBlocked?: boolean
   credits?: number
   referralCode?: string
   referredBy?: string | null
@@ -1340,6 +1379,7 @@ export type UserUpdateWithoutPurchasesInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isBlocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   credits?: Prisma.IntFieldUpdateOperationsInput | number
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   referralEarnings?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1364,6 +1404,7 @@ export type UserUncheckedUpdateWithoutPurchasesInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isBlocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   credits?: Prisma.IntFieldUpdateOperationsInput | number
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1388,6 +1429,7 @@ export type UserCreateWithoutTransactionsInput = {
   emailVerified?: Date | string | null
   image?: string | null
   password?: string | null
+  isBlocked?: boolean
   credits?: number
   referralCode?: string
   referralEarnings?: number
@@ -1412,6 +1454,7 @@ export type UserUncheckedCreateWithoutTransactionsInput = {
   emailVerified?: Date | string | null
   image?: string | null
   password?: string | null
+  isBlocked?: boolean
   credits?: number
   referralCode?: string
   referredBy?: string | null
@@ -1452,6 +1495,7 @@ export type UserUpdateWithoutTransactionsInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isBlocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   credits?: Prisma.IntFieldUpdateOperationsInput | number
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   referralEarnings?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1476,6 +1520,7 @@ export type UserUncheckedUpdateWithoutTransactionsInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isBlocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   credits?: Prisma.IntFieldUpdateOperationsInput | number
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1500,6 +1545,7 @@ export type UserCreateManyReferrerInput = {
   emailVerified?: Date | string | null
   image?: string | null
   password?: string | null
+  isBlocked?: boolean
   credits?: number
   referralCode?: string
   referralEarnings?: number
@@ -1519,6 +1565,7 @@ export type UserUpdateWithoutReferrerInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isBlocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   credits?: Prisma.IntFieldUpdateOperationsInput | number
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   referralEarnings?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1543,6 +1590,7 @@ export type UserUncheckedUpdateWithoutReferrerInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isBlocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   credits?: Prisma.IntFieldUpdateOperationsInput | number
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   referralEarnings?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1567,6 +1615,7 @@ export type UserUncheckedUpdateManyWithoutReferrerInput = {
   emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isBlocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   credits?: Prisma.IntFieldUpdateOperationsInput | number
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   referralEarnings?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1653,6 +1702,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   emailVerified?: boolean
   image?: boolean
   password?: boolean
+  isBlocked?: boolean
   credits?: boolean
   referralCode?: boolean
   referredBy?: boolean
@@ -1680,6 +1730,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   emailVerified?: boolean
   image?: boolean
   password?: boolean
+  isBlocked?: boolean
   credits?: boolean
   referralCode?: boolean
   referredBy?: boolean
@@ -1701,6 +1752,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   emailVerified?: boolean
   image?: boolean
   password?: boolean
+  isBlocked?: boolean
   credits?: boolean
   referralCode?: boolean
   referredBy?: boolean
@@ -1722,6 +1774,7 @@ export type UserSelectScalar = {
   emailVerified?: boolean
   image?: boolean
   password?: boolean
+  isBlocked?: boolean
   credits?: boolean
   referralCode?: boolean
   referredBy?: boolean
@@ -1735,7 +1788,7 @@ export type UserSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "emailVerified" | "image" | "password" | "credits" | "referralCode" | "referredBy" | "referralEarnings" | "totalPurchased" | "totalSpent" | "referralBonusGiven" | "referralBonusesThisMonth" | "referralBonusesResetAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "emailVerified" | "image" | "password" | "isBlocked" | "credits" | "referralCode" | "referredBy" | "referralEarnings" | "totalPurchased" | "totalSpent" | "referralBonusGiven" | "referralBonusesThisMonth" | "referralBonusesResetAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   referrer?: boolean | Prisma.User$referrerArgs<ExtArgs>
   referrals?: boolean | Prisma.User$referralsArgs<ExtArgs>
@@ -1769,6 +1822,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     emailVerified: Date | null
     image: string | null
     password: string | null
+    isBlocked: boolean
     credits: number
     referralCode: string
     referredBy: string | null
@@ -2215,6 +2269,7 @@ export interface UserFieldRefs {
   readonly emailVerified: Prisma.FieldRef<"User", 'DateTime'>
   readonly image: Prisma.FieldRef<"User", 'String'>
   readonly password: Prisma.FieldRef<"User", 'String'>
+  readonly isBlocked: Prisma.FieldRef<"User", 'Boolean'>
   readonly credits: Prisma.FieldRef<"User", 'Int'>
   readonly referralCode: Prisma.FieldRef<"User", 'String'>
   readonly referredBy: Prisma.FieldRef<"User", 'String'>

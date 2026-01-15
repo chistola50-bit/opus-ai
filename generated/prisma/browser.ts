@@ -52,3 +52,8 @@ export type Transaction = Prisma.TransactionModel
  * 
  */
 export type PasswordResetToken = Prisma.PasswordResetTokenModel
+/**
+ * Model Payment
+ * 
+ */
+export type Payment = Prisma.PaymentModel
