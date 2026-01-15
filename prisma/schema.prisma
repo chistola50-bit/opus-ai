@@ -107,3 +107,12 @@ model PasswordResetToken {
 
   @@index([email])
 }
+model Payment {
+  id        String   @id @default(cuid())
+  orderId   String   @unique
+  email     String
+  planId    String
+  status    String
+  processed Boolean  @default(false)
+  createdAt DateTime @default(now())
+}

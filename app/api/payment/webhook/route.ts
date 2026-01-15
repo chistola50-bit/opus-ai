@@ -11,8 +11,7 @@ const plans: Record<string, number> = {
 export async function POST(request: Request) {
   try {
     const data = await request.json();
-    
-    // Проверяем статус оплаты
+
     if (data.status !== 'success') {
       return NextResponse.json({ ok: true });
     }
@@ -22,7 +21,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No order_id' }, { status: 400 });
     }
 
-    // Парсим order_id: email_planId_timestamp
     const parts = orderId.split('_');
     const email = parts[0];
     const planId = parts[1];
@@ -32,15 +30,38 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid order' }, { status: 400 });
     }
 
-    // Начисляем кредиты
-    await prisma.user.update({
-      where: { email },
-      data: {
-        credits: { increment: credits },
-      },
+    const existing = await prisma.payment.findUnique({
+      where: { orderId },
     });
 
-    console.log(`Credits added: ${email} +${credits}`);
+    if (existing?.processed) {
+      return NextResponse.json({ ok: true });
+    }
+
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { email },
+        data: {
+          credits: { increment: credits },
+        },
+      }),
+      prisma.payment.upsert({
+        where: { orderId },
+        update: {
+          status: 'success',
+          processed: true,
+        },
+        create: {
+          orderId,
+          email,
+          planId,
+          status: 'success',
+          processed: true,
+        },
+      }),
+    ]);
+
+    console.log(`Credits added ONCE: ${email} +${credits}`);
 
     return NextResponse.json({ ok: true });
   } catch (error) {
