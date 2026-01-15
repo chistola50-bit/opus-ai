@@ -1,3 +1,4 @@
+// app/api/credits/use/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
       select: { credits: true },
     });
 
-    // Record transaction — без поля `tool`, только details
+    // Record transaction — БЕЗ поля tool
     await prisma.transaction.create({
       data: {
         userId: user.id,
@@ -91,5 +92,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}  
-
+}
