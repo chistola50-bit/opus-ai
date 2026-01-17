@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { Analytics } from '@vercel/analytics/react';
 
 export default function AnalyticsTracker() {
   const pathname = usePathname();
@@ -16,5 +17,5 @@ export default function AnalyticsTracker() {
     }).catch(() => {});
   }, [pathname]);
 
-  return null;
+  return <Analytics />;
 }
