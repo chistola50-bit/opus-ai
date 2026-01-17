@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Coins, Check, Zap } from 'lucide-react';
+import { ArrowLeft, Coins, Check, Zap, Clock, AlertCircle } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { authTranslations } from '@/lib/authTranslations';
 import LanguageSelector from '@/components/LanguageSelector';
@@ -193,6 +193,23 @@ export default function BuyCreditsPage() {
                   ${currentPlan.price}
                 </span>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Payment Time Warning */}
+        <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+              <Clock size={18} className="text-blue-400" />
+            </div>
+            <div>
+              <h4 className="text-blue-400 font-semibold mb-1">
+                {t.paymentTimeTitle}
+              </h4>
+              <p className="text-blue-200/70 text-sm leading-relaxed">
+                {t.paymentTimeNote}
+              </p>
             </div>
           </div>
         </div>

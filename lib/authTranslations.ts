@@ -53,6 +53,10 @@ export const authTranslations: { [key: string]: {
   creditsNote: string;
   popular: string;
   backToDashboard: string;
+  
+  // Payment Time Warning
+  paymentTimeTitle: string;
+  paymentTimeNote: string;
 }} = {
   EN: {
     createAccount: 'Create your account',
@@ -97,7 +101,9 @@ export const authTranslations: { [key: string]: {
     pay: 'Pay',
     creditsNote: 'Credits are added instantly after payment confirmation. Credits never expire.',
     popular: 'POPULAR',
-    backToDashboard: 'Back to Dashboard'
+    backToDashboard: 'Back to Dashboard',
+    paymentTimeTitle: 'Payment Processing Time',
+    paymentTimeNote: 'Cryptocurrency payment confirmation may take up to 15-20 minutes. Please do not close the page. Your credits will be added automatically after confirmation.'
   },
   RU: {
     createAccount: 'Создайте аккаунт',
@@ -142,7 +148,9 @@ export const authTranslations: { [key: string]: {
     pay: 'Оплатить',
     creditsNote: 'Кредиты добавляются мгновенно после подтверждения платежа. Кредиты не сгорают.',
     popular: 'ПОПУЛЯРНЫЙ',
-    backToDashboard: 'Вернуться в Dashboard'
+    backToDashboard: 'Вернуться в Dashboard',
+    paymentTimeTitle: 'Время обработки платежа',
+    paymentTimeNote: 'Подтверждение криптовалютного платежа может занять до 15-20 минут. Пожалуйста, не закрывайте страницу. Кредиты будут начислены автоматически после подтверждения.'
   },
   PT: {
     createAccount: 'Crie sua conta',
@@ -187,7 +195,9 @@ export const authTranslations: { [key: string]: {
     pay: 'Pagar',
     creditsNote: 'Créditos são adicionados instantaneamente após confirmação. Créditos nunca expiram.',
     popular: 'POPULAR',
-    backToDashboard: 'Voltar ao Dashboard'
+    backToDashboard: 'Voltar ao Dashboard',
+    paymentTimeTitle: 'Tempo de processamento',
+    paymentTimeNote: 'A confirmação do pagamento em criptomoeda pode levar até 15-20 minutos. Por favor, não feche a página. Seus créditos serão adicionados automaticamente após a confirmação.'
   },
   HI: {
     createAccount: 'अपना अकाउंट बनाएं',
@@ -232,7 +242,9 @@ export const authTranslations: { [key: string]: {
     pay: 'भुगतान करें',
     creditsNote: 'भुगतान की पुष्टि के बाद क्रेडिट तुरंत जुड़ जाते हैं। क्रेडिट कभी समाप्त नहीं होते।',
     popular: 'लोकप्रिय',
-    backToDashboard: 'Dashboard पर वापस जाएं'
+    backToDashboard: 'Dashboard पर वापस जाएं',
+    paymentTimeTitle: 'भुगतान प्रसंस्करण समय',
+    paymentTimeNote: 'क्रिप्टोकरेंसी भुगतान की पुष्टि में 15-20 मिनट तक लग सकते हैं। कृपया पेज बंद न करें। पुष्टि के बाद आपके क्रेडिट स्वचालित रूप से जोड़ दिए जाएंगे।'
   },
   ID: {
     createAccount: 'Buat akun Anda',
@@ -277,7 +289,9 @@ export const authTranslations: { [key: string]: {
     pay: 'Bayar',
     creditsNote: 'Kredit ditambahkan langsung setelah konfirmasi pembayaran. Kredit tidak pernah kedaluwarsa.',
     popular: 'POPULER',
-    backToDashboard: 'Kembali ke Dashboard'
+    backToDashboard: 'Kembali ke Dashboard',
+    paymentTimeTitle: 'Waktu Pemrosesan Pembayaran',
+    paymentTimeNote: 'Konfirmasi pembayaran cryptocurrency dapat memakan waktu hingga 15-20 menit. Mohon jangan tutup halaman. Kredit Anda akan ditambahkan secara otomatis setelah konfirmasi.'
   },
   PH: {
     createAccount: 'Gumawa ng account',
@@ -322,6 +336,8 @@ export const authTranslations: { [key: string]: {
     pay: 'Magbayad',
     creditsNote: 'Ang credits ay idinaragdag kaagad pagkatapos ng kumpirmasyon. Hindi nag-e-expire ang credits.',
     popular: 'POPULAR',
-    backToDashboard: 'Bumalik sa Dashboard'
+    backToDashboard: 'Bumalik sa Dashboard',
+    paymentTimeTitle: 'Oras ng Pagproseso ng Bayad',
+    paymentTimeNote: 'Ang kumpirmasyon ng pagbabayad sa cryptocurrency ay maaaring tumagal ng hanggang 15-20 minuto. Mangyaring huwag isara ang pahina. Ang iyong mga kredito ay awtomatikong idaragdag pagkatapos ng kumpirmasyon.'
   }
 };
