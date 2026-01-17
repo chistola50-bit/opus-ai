@@ -1,13 +1,11 @@
 generator client {
   provider = "prisma-client-js"
-  // БЕЗ output — клиент генерится в node_modules/@prisma/client
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
 
 model User {
   id            String    @id @default(cuid())
@@ -17,30 +15,29 @@ model User {
   image         String?
   password      String?
 
-  // блокировка аккаунта
-  isBlocked     Boolean   @default(false)
+  isBlocked Boolean @default(false)
 
-  // кредиты и рефералка
-  credits                   Int      @default(0)
-  referralCode              String   @unique @default(cuid())
-  referredBy                String?
-  referralEarnings          Int      @default(0)
-  totalPurchased            Int      @default(0)
-  totalSpent                Int      @default(0)
-  referralBonusGiven        Boolean  @default(false)
-  referralBonusesThisMonth  Int      @default(0)
-  referralBonusesResetAt    DateTime @default(now())
+  credits                  Int      @default(0)
+  referralCode             String   @unique @default(cuid())
+  referredBy               String?
+  referralEarnings         Int      @default(0)
+  totalPurchased           Int      @default(0)
+  totalSpent               Int      @default(0)
+  referralBonusGiven       Boolean  @default(false)
+  referralBonusesThisMonth Int      @default(0)
+  referralBonusesResetAt   DateTime @default(now())
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  referrer  User?   @relation("UserReferrals", fields: [referredBy], references: [id])
-  referrals User[]  @relation("UserReferrals")
+  referrer  User?  @relation("UserReferrals", fields: [referredBy], references: [id])
+  referrals User[] @relation("UserReferrals")
 
   accounts       Account[]
   sessions       Session[]
   purchases      Purchase[]
   transactions   Transaction[]
+  payments       Payment[]
   securityEvents SecurityEvent[]
   visits         VisitLog[]
 }
@@ -69,7 +66,8 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
@@ -81,12 +79,12 @@ model VerificationToken {
 }
 
 model Purchase {
-  id        String   @id @default(cuid())
-  userId    String
-  amount    Int
-  credits   Int
-  status    String   @default("pending")
-  provider  String
+  id       String @id @default(cuid())
+  userId   String
+  amount   Int
+  credits  Int
+  status   String @default("pending")
+  provider String
 
   referralBonus Int     @default(0)
   referralPaid  Boolean @default(false)
@@ -96,11 +94,11 @@ model Purchase {
 }
 
 model Transaction {
-  id        String   @id @default(cuid())
-  userId    String
-  type      String
-  amount    Int
-  details   String?
+  id      String @id @default(cuid())
+  userId  String
+  type    String
+  amount  Int
+  details String?
 
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
@@ -116,18 +114,29 @@ model PasswordResetToken {
   @@index([email])
 }
 
-// оплата CryptoCloud
 model Payment {
-  id        String   @id @default(cuid())
-  orderId   String   @unique
+  id        String    @id @default(cuid())
+  userId    String?
   email     String
+  orderId   String    @unique
+  txHash    String?   @unique
+  currency  String
   planId    String
-  status    String
-  processed Boolean  @default(false)
-  createdAt DateTime @default(now())
+  amount    String
+  credits   Int
+  status    String    @default("pending")
+  processed Boolean   @default(false)
+  comment   String?
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([createdAt])
+  @@index([status])
+  @@index([comment])
 }
 
-// Логи посещений
 model VisitLog {
   id        String   @id @default(cuid())
   userId    String?
@@ -139,6 +148,9 @@ model VisitLog {
   createdAt DateTime @default(now())
 
   user User? @relation(fields: [userId], references: [id])
+
+  @@index([createdAt])
+  @@index([path])
 }
 
 model SecurityEvent {
@@ -152,4 +164,8 @@ model SecurityEvent {
   createdAt DateTime @default(now())
 
   user User? @relation(fields: [userId], references: [id])
+
+  @@index([createdAt])
+  @@index([type])
+  @@index([level])
 }

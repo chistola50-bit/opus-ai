@@ -1,100 +1,99 @@
-// app/api/payment/webhook/route.ts
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-// Твои тарифы – подставь реальные IDs и кредиты
-const PLANS: Record<string, { credits: number }> = {
-  basic: { credits: 100_000 },
-  pro: { credits: 250_000 },
-  max: { credits: 600_000 },
+const plans: Record<string, { credits: number; amount: number }> = {
+  starter: { credits: 300000, amount: 3.49 },
+  basic: { credits: 700000, amount: 7.49 },
+  pro: { credits: 1100000, amount: 11.49 },
+  business: { credits: 1500000, amount: 15.49 },
 };
 
-export async function POST(req: NextRequest) {
+export async function POST(request: Request) {
   try {
-    // CryptoCloud может слать JSON – берём как текст, потом парсим
-    const rawBody = await req.text();
-    const data = JSON.parse(rawBody || '{}');
+    const data = await request.json();
+    
+    console.log('Webhook received:', JSON.stringify(data, null, 2));
 
-    console.log('CryptoCloud webhook payload:', data);
-
-    // ✅ ГЛАВНОЕ ИСПРАВЛЕНИЕ:
-    // У них status = "paid" / "failed" / "canceled"
-    if (data.status !== 'paid') {
-      // просто игнорируем всё, что не оплаченное
+    if (data?.status !== 'success') {
+      console.log('Payment not successful, status:', data?.status);
       return NextResponse.json({ ok: true });
     }
 
-    const orderId: string | undefined = data.order_id || data.orderId;
-
+    const orderId: string | undefined = data?.order_id;
     if (!orderId) {
-      console.error('Webhook error: no order_id in payload');
+      console.log('No order_id in webhook');
       return NextResponse.json({ error: 'No order_id' }, { status: 400 });
     }
 
-    // Мы раньше делали order_id типа: `${email}_${planId}_${Date.now()}`
-    const [email, planId] = orderId.split('_');
+    const parts = orderId.split('_');
+    const email = parts[0];
+    const planId = parts[1];
+    const plan = plans[planId];
 
-    if (!email || !planId) {
-      console.error('Webhook error: cannot parse email/planId from orderId', orderId);
-      return NextResponse.json({ error: 'Bad orderId format' }, { status: 400 });
+    if (!email || !plan) {
+      console.log('Invalid order format:', { email, planId });
+      return NextResponse.json({ error: 'Invalid order' }, { status: 400 });
     }
 
-    const plan = PLANS[planId];
+    const result = await prisma.$transaction(async (tx) => {
+      const existing = await tx.payment.findUnique({
+        where: { orderId },
+        select: { id: true, processed: true },
+      });
 
-    if (!plan) {
-      console.error('Webhook error: unknown planId', planId);
-      return NextResponse.json({ error: 'Unknown plan' }, { status: 400 });
-    }
-
-    // Проверяем, есть ли уже такой платёж
-    const existing = await prisma.payment.findUnique({
-      where: { orderId },
-    });
-
-    // Если уже обработали – просто выходим, чтобы не начислить второй раз
-    if (existing?.processed) {
-      console.log('Webhook: payment already processed', orderId);
-      return NextResponse.json({ ok: true });
-    }
-
-    // Транзакция: начисляем кредиты + отмечаем платёж как processed
-    await prisma.$transaction(async (tx) => {
-      // 1) создаём или обновляем запись Payment
-      if (existing) {
-        await tx.payment.update({
-          where: { orderId },
-          data: {
-            status: 'paid',
-            processed: true,
-          },
-        });
-      } else {
-        await tx.payment.create({
-          data: {
-            orderId,
-            email,
-            planId,
-            status: 'paid',
-            processed: true,
-          },
-        });
+      if (existing?.processed) {
+        return { alreadyProcessed: true };
       }
 
-      // 2) начисляем кредиты пользователю
-      await tx.user.update({
+      await tx.payment.upsert({
+        where: { orderId },
+        update: { status: 'confirmed' },
+        create: {
+          orderId,
+          email,
+          planId,
+          currency: 'USD',
+          amount: String(plan.amount),
+          credits: plan.credits,
+          status: 'confirmed',
+          processed: false,
+        },
+      });
+
+      const user = await tx.user.update({
         where: { email },
         data: {
           credits: { increment: plan.credits },
           totalPurchased: { increment: plan.credits },
         },
+        select: { id: true, credits: true },
       });
+
+      await tx.transaction.create({
+        data: {
+          userId: user.id,
+          type: 'purchase',
+          amount: plan.credits,
+          details: `CryptoCloud: ${planId} (+${plan.credits.toLocaleString()} credits)`,
+        },
+      });
+
+      await tx.payment.update({
+        where: { orderId },
+        data: { processed: true, userId: user.id },
+      });
+
+      return { alreadyProcessed: false };
     });
 
-    console.log('Webhook: credits added successfully for', email, 'order', orderId);
+    if (result.alreadyProcessed) {
+      return NextResponse.json({ ok: true, duplicate: true });
+    }
 
     return NextResponse.json({ ok: true });
-  } catch (err) {
-    console.error('CryptoCloud webhook error:', err);
+    
+  } catch (error) {
+    console.error('Webhook error:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }

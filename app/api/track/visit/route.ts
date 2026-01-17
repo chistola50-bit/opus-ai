@@ -1,4 +1,3 @@
-// app/api/track/visit/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -13,18 +12,27 @@ export async function POST(req: NextRequest) {
     const ip = ipHeader.split(',')[0]?.trim() || null;
     const userAgent = req.headers.get('user-agent');
     const referer = req.headers.get('referer');
-    const country =
-      req.headers.get('cf-ipcountry') || // Cloudflare
-      null;
+    const country = req.headers.get('cf-ipcountry') || null;
+
+    // Получаем userId только если есть сессия
+    let userId: string | null = null;
+    
+    if (session?.user?.email) {
+      const user = await prisma.user.findUnique({
+        where: { email: session.user.email },
+        select: { id: true },
+      });
+      userId = user?.id || null;
+    }
 
     await prisma.visitLog.create({
       data: {
         path: path || '/',
-        ip: ip || undefined,
-        userAgent: userAgent || undefined,
-        referer: referer || undefined,
-        country: country || undefined,
-        userId: (session?.user as any)?.id || undefined,
+        ip: ip || null,
+        userAgent: userAgent || null,
+        referer: referer || null,
+        country: country || null,
+        userId: userId, // теперь либо реальный id, либо null
       },
     });
 
